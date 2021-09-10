@@ -1,16 +1,35 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+
+import 'databaseHelper.dart';
 import 'event.dart';
 import 'globals.dart';
-import 'databaseHelper.dart';
 
 Future<List<Event>> fetchPosts(http.Client client) async {
   final response = await client.get('https://event-orga.mensa.de/getAppJSON.php?jt=jt2020');
 
   return compute(parsePosts, response.body);
+}
+
+/// if the database is empty, insert events from local file into database
+Future<void> initDbFromLocalFile() async {
+  final DatabaseHelper dbHelper = new DatabaseHelper();
+  dbHelper.getCount().then((count) {
+    if (count == 0) {
+      rootBundle.loadString("assets/data/jt20.json").then((localJson) => compute(parsePosts, localJson)).then((allEvents) {
+        if (allEvents != null) {
+          for (var index = 1; index < allEvents.length; index++) {
+            dbHelper.insertEvent(allEvents[index]);
+          }
+        }
+      });
+    }
+  });
 }
 
 List<Event> parsePosts(String responseBody) {
@@ -27,8 +46,7 @@ class LoadData extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    DatabaseHelper dbHelper = new DatabaseHelper();    
+    DatabaseHelper dbHelper = new DatabaseHelper();
     dbHelper.database;
 
     return Scaffold(
@@ -46,17 +64,18 @@ class LoadData extends StatelessWidget {
           if (allEvents != null) {
             for (var index = 1; index < allEvents.length; index++) {
               dbHelper.insertEvent(allEvents[index]);
-            }  
+            }
           }
 
           return snapshot.hasData
-      
-          ? Center(child: Text("Daten wurden geladen",
-              style: TextStyle(
-                fontSize: 20.0,
-              ),
-            ))
-          : Center(child: CircularProgressIndicator());  
+              ? Center(
+                  child: Text(
+                  "Daten wurden geladen",
+                  style: TextStyle(
+                    fontSize: 20.0,
+                  ),
+                ))
+              : Center(child: CircularProgressIndicator());
         },
       ),
     );

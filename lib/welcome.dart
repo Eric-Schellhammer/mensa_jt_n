@@ -36,6 +36,12 @@ class WelcomePageState extends State<WelcomePage> {
   List<FavoritEventID> favoritEvents;
 
   @override
+  void initState() {
+    super.initState();
+    initDbFromLocalFile();
+  }
+
+  @override
   Widget build(BuildContext context){
 
     if (allEvents != null) {
