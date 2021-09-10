@@ -1,4 +1,4 @@
-# mensa_jt2
+# Mensa_JT_N
 
 A joint effort
 
